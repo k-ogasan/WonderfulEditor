@@ -33,9 +33,12 @@ gem "devise_token_auth", "~> 1.1"
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
+  gem "factory_bot_rails"
+  gem "faker"
   gem "pry-byebug", "~> 3.9"
   gem "pry-doc", "~> 1.6"
   gem "pry-rails", "~> 0.3.9"
+  gem "rspec-rails", "~> 4.0.1"
   gem "rubocop-rails", "~> 2.14"
   gem "rubocop-rspec", "~> 2.7"
 end
