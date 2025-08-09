@@ -30,9 +30,11 @@ gem "active_model_serializers", "~> 0.10.0"
 gem "bootsnap", ">= 1.4.4", require: false
 gem "concurrent-ruby", "1.3.4"
 gem "devise_token_auth", "~> 1.1"
+gem "omniauth"
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
+  gem "devise"
   gem "factory_bot_rails"
   gem "faker"
   gem "pry-byebug", "~> 3.9"
