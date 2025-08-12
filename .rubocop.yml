@@ -9,4 +9,3 @@ inherit_from:
 
 AllCops:
   TargetRubyVersion: 2.7
-  NewCops: enable
