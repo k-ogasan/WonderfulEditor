@@ -21,8 +21,6 @@
 #
 FactoryBot.define do
   factory :comment do
-    body { "MyText" }
-    user { nil }
-    article { nil }
+    body { Faker::Lorem.paragraph_by_chars(number: rand(1..74)) }
   end
 end

@@ -22,4 +22,6 @@
 class Comment < ApplicationRecord
   belongs_to :user
   belongs_to :article
+
+  validates :body, length: { in: 1..75 }
 end
