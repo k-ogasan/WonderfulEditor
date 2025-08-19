@@ -19,7 +19,7 @@
 #
 FactoryBot.define do
   factory :article do
-    title { Faker::Lorem.sentence(word_count: 75)[0..74] }# 1〜75ワードの文を生成し、75文字以内に切り取る
+    title { Faker::Lorem.sentence(word_count: 75)[0..74] } # 1〜75ワードの文を生成し、75文字以内に切り取る
     body { Faker::Lorem.characters(number: rand(1..199)) } # 1〜199文字のランダムな文字列
     association :user
   end
