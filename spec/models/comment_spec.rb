@@ -24,6 +24,7 @@ require "rails_helper"
 RSpec.describe Comment, type: :model do
   let(:user) { FactoryBot.create(:user) } # 必要なユーザーを作成
   let(:article) { FactoryBot.create(:article) } # 必要な記事を作成
+
   context "本文が1文字以上、75文字未満だった時" do
     it "コメントが作られる" do
       comment = Comment.new(body: "テストコメント", user: user, article: article)
