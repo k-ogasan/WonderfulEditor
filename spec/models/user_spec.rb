@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # == Schema Information
 #
 # Table name: users
@@ -31,18 +29,28 @@
 #  index_users_on_reset_password_token  (reset_password_token) UNIQUE
 #  index_users_on_uid_and_provider      (uid,provider) UNIQUE
 #
-class User < ApplicationRecord
-  extend Devise::Models
+require "rails_helper"
 
-  # Include default devise modules. Others available are:
-  # :confirmable, :lockable, :timeoutable, :trackable and :omniauthable
-  devise :database_authenticatable, :registerable,
-         :recoverable, :rememberable, :validatable
-  include DeviseTokenAuth::Concerns::User
+RSpec.describe User, type: :model do
+  context "name が存在する時" do
+    it "ユーザーが作られる" do
+      user = FactoryBot.build(:user)
+      expect(user).to be_valid
+    end
+  end
 
-  has_many :articles, dependent: :destroy
-  has_many :comments, dependent: :destroy
-  has_many :article_likes, dependent: :destroy
-  validates :name, presence: true
-  validates :name, uniqueness: true
+  context "name が存在しない時" do
+    it "ユーザーが作成できない" do
+      user = FactoryBot.build(:user, name: nil)
+      expect(user).not_to be_valid
+    end
+  end
+
+  context "同じnameが存在する場合" do
+    it "ユーザーが作成できない" do
+      create(:user, name: "foo")
+      user = FactoryBot.build(:user, name: "foo")
+      expect(user).to be_invalid
+    end
+  end
 end

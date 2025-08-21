@@ -1,6 +1,8 @@
-# require:
-#   - rubocop-rails
-plugins: rubocop-rails
+require:
+  - rubocop-rails
+  - rubocop-rspec
+  - rubocop-factory_bot
+  - rubocop-rspec_rails
 
 inherit_from:
   - config/rubocop/rubocop.yml
@@ -8,4 +10,8 @@ inherit_from:
   - config/rubocop/rspec.yml
 
 AllCops:
-  TargetRubyVersion: 2.7
+  TargetRubyVersion: 3.1
+
+Capybara/RSpec/PredicateMatcher:
+  Exclude:
+    - 'spec/models/**/*'
