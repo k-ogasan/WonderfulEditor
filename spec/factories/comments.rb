@@ -21,6 +21,8 @@
 #
 FactoryBot.define do
   factory :comment do
+    association :user
+    association :article
     body { Faker::Lorem.paragraph_by_chars(number: rand(1..74)) }
   end
 end
