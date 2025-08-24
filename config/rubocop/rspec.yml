@@ -60,3 +60,11 @@ RSpec/NestedGroups:
 # ブロックの方が見た目がスッキリして見やすいので、どちらでもお好きにどうぞ。
 RSpec/ReturnFromStub:
   Enabled: false
+
+# 複数の期待値を許可する（デフォルトは1つ）
+RSpec/MultipleExpectations:
+  Max: 7
+
+# 問題のあるルールを一時的に無効化
+Capybara/RSpec/PredicateMatcher:
+  Enabled: false

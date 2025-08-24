@@ -1,7 +1,6 @@
-require 'rails_helper'
+require "rails_helper"
 
 RSpec.describe "Api::V1::Articles", type: :request do
-
   describe "GET /index" do
     it "記事一覧を取得できる" do
       # テストデータを作成
@@ -45,5 +44,4 @@ RSpec.describe "Api::V1::Articles", type: :request do
       expect(response).to have_http_status(:success)
     end
   end
-
 end

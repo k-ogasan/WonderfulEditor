@@ -1,11 +1,11 @@
 Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
-      get 'articles/index'
-      get 'articles/show'
-      get 'articles/create'
-      get 'articles/update'
-      get 'articles/destroy'
+      get "articles/index"
+      get "articles/show"
+      get "articles/create"
+      get "articles/update"
+      get "articles/destroy"
     end
   end
   namespace :api do
