@@ -94,7 +94,7 @@ RSpec.describe "Api::V1::Articles", type: :request do
     end
   end
 
-# TODO: 後で実装予定のアクション
+  # TODO: 後で実装予定のアクション
   # describe "POST /create" do
   #   it "returns http success" do
   #     post "/api/v1/articles"
