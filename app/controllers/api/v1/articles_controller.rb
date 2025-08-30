@@ -15,6 +15,14 @@ class Api::V1::ArticlesController < Api::V1::BaseApiController
   end
 
   def create
+    # current_userを使用して記事を作成
+    article = current_user.articles.build(article_params)
+
+    if article.save
+      render json: article, serializer: Api::V1::ArticleDetailSerializer, status: :created
+    else
+      render json: { errors: article.errors.full_messages }, status: :unprocessable_entity
+    end
   end
 
   def update
@@ -22,4 +30,11 @@ class Api::V1::ArticlesController < Api::V1::BaseApiController
 
   def destroy
   end
+
+  private
+
+    def article_params
+      # 許可するパラメータを制限
+      params.require(:article).permit(:title, :body)
+    end
 end
