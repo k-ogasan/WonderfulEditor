@@ -33,8 +33,8 @@ class Api::V1::ArticlesController < Api::V1::BaseApiController
 
   private
 
-  def article_params
-    # 許可するパラメータを制限
-    params.require(:article).permit(:title, :body)
-  end
+    def article_params
+      # 許可するパラメータを制限
+      params.require(:article).permit(:title, :body)
+    end
 end

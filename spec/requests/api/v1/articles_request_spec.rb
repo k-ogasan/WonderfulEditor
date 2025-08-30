@@ -105,8 +105,8 @@ RSpec.describe "Api::V1::Articles", type: :request do
         post "/api/v1/articles", params: {
           article: {
             title: "テスト記事",
-            body: "テスト記事の本文"
-          }
+            body: "テスト記事の本文",
+          },
         }
 
         expect(response).to have_http_status(:created)
@@ -124,8 +124,8 @@ RSpec.describe "Api::V1::Articles", type: :request do
           post "/api/v1/articles", params: {
             article: {
               title: "保存テスト記事",
-              body: "保存テスト記事の本文"
-            }
+              body: "保存テスト記事の本文",
+            },
           }
         }.to change(Article, :count).by(1)
 
@@ -144,8 +144,8 @@ RSpec.describe "Api::V1::Articles", type: :request do
         post "/api/v1/articles", params: {
           article: {
             title: "",
-            body: "本文は入力済み"
-          }
+            body: "本文は入力済み",
+          },
         }
 
         expect(response).to have_http_status(:unprocessable_entity)
@@ -158,8 +158,8 @@ RSpec.describe "Api::V1::Articles", type: :request do
         post "/api/v1/articles", params: {
           article: {
             title: "タイトルは入力済み",
-            body: ""
-          }
+            body: "",
+          },
         }
 
         expect(response).to have_http_status(:unprocessable_entity)
@@ -177,8 +177,8 @@ RSpec.describe "Api::V1::Articles", type: :request do
         post "/api/v1/articles", params: {
           article: {
             title: "別ユーザーの記事",
-            body: "別ユーザーの記事の本文"
-          }
+            body: "別ユーザーの記事の本文",
+          },
         }
 
         expect(response).to have_http_status(:created)

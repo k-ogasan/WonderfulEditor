@@ -4,8 +4,8 @@ class Api::V1::BaseApiController < ApplicationController
 
   private
 
-  def current_user
-    # 仮実装: usersテーブルの一番初めのユーザーを返す
-    User.first
-  end
+    def current_user
+      # 仮実装: usersテーブルの一番初めのユーザーを返す
+      User.first
+    end
 end
