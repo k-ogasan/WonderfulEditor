@@ -68,3 +68,7 @@ RSpec/MultipleExpectations:
 # 問題のあるルールを一時的に無効化
 Capybara/RSpec/PredicateMatcher:
   Enabled: false
+
+# context ごとに let! を使い分けたい場合があるため無効に
+RSpec/LetSetup:
+  Enabled: false

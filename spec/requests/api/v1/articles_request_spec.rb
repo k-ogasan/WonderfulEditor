@@ -127,7 +127,7 @@ RSpec.describe "Api::V1::Articles", type: :request do
               body: "保存テスト記事の本文",
             },
           }
-        }.to change(Article, :count).by(1)
+        }.to change { Article.count }.by(1)
 
         # データベースに正しく保存されているか確認
         article = Article.last
@@ -188,14 +188,64 @@ RSpec.describe "Api::V1::Articles", type: :request do
     end
   end
 
-  # TODO: 後で実装予定のアクション
-  # describe "PATCH /update" do
-  #   it "returns http success" do
-  #     patch "/api/v1/articles/1"
-  #     expect(response).to have_http_status(:success)
-  #   end
-  # end
+  describe "PATCH /api/v1/articles/:id" do
+    let(:test_user) { create(:user, name: "テストユーザー", email: "test@example.com") }
+    let(:article) { create(:article, user: test_user, title: "元のタイトル", body: "元の本文") }
 
+    context "正常な記事更新" do
+      it "記事の更新が成功する" do
+        allow_any_instance_of(Api::V1::BaseApiController).to receive(:current_user).and_return(test_user)
+
+        patch "/api/v1/articles/#{article.id}", params: {
+          article: {
+            title: "更新されたタイトル",
+            body: "更新された本文",
+          },
+        }
+
+        expect(response).to have_http_status(:ok)
+        expect(json_response["title"]).to eq("更新されたタイトル")
+        expect(json_response["body"]).to eq("更新された本文")
+        expect(json_response["user"]["id"]).to eq(test_user.id)
+      end
+    end
+
+    context "権限エラー" do
+      let(:other_user) { create(:user, name: "他のユーザー", email: "other@example.com") }
+
+      it "記事の所有者でない場合、権限エラーが返される" do
+        allow_any_instance_of(Api::V1::BaseApiController).to receive(:current_user).and_return(other_user)
+
+        patch "/api/v1/articles/#{article.id}", params: {
+          article: {
+            title: "更新しようとしたタイトル",
+            body: "更新しようとした本文",
+          },
+        }
+
+        expect(response).to have_http_status(:forbidden)
+        expect(json_response["error"]).to eq("権限がありません")
+      end
+    end
+
+    context "記事が見つからない場合" do
+      it "404エラーが返される" do
+        allow_any_instance_of(Api::V1::BaseApiController).to receive(:current_user).and_return(test_user)
+
+        patch "/api/v1/articles/99999", params: {
+          article: {
+            title: "更新しようとしたタイトル",
+            body: "更新しようとした本文",
+          },
+        }
+
+        expect(response).to have_http_status(:not_found)
+        expect(json_response["error"]).to eq("記事が見つかりません")
+      end
+    end
+  end
+
+  # TODO: 後で実装予定のアクション
   # describe "DELETE /destroy" do
   #   it "returns http success" do
   #     delete "/api/v1/articles/1"

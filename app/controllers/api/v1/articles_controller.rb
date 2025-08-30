@@ -26,6 +26,22 @@ class Api::V1::ArticlesController < Api::V1::BaseApiController
   end
 
   def update
+    article = Article.find(params[:id])
+
+    # 記事の所有者かどうかを確認
+    if article.user != current_user
+      render json: { error: "権限がありません" }, status: :forbidden
+      return
+    end
+
+    # 記事の更新
+    if article.update(article_params)
+      render json: article, serializer: Api::V1::ArticleDetailSerializer
+    else
+      render json: { errors: article.errors.full_messages }, status: :unprocessable_entity
+    end
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "記事が見つかりません" }, status: :not_found
   end
 
   def destroy
