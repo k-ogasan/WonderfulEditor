@@ -94,14 +94,101 @@ RSpec.describe "Api::V1::Articles", type: :request do
     end
   end
 
-  # TODO: 後で実装予定のアクション
-  # describe "POST /create" do
-  #   it "returns http success" do
-  #     post "/api/v1/articles"
-  #     expect(response).to have_http_status(:success)
-  #   end
-  # end
+  describe "POST /api/v1/articles" do
+    let(:test_user) { create(:user, name: "テストユーザー", email: "test@example.com") }
 
+    context "正常な記事作成" do
+      it "記事作成時に正しいユーザーのIDが設定される" do
+        # allow_any_instance_ofを使用してcurrent_userをテスト用ユーザーに設定
+        allow_any_instance_of(Api::V1::BaseApiController).to receive(:current_user).and_return(test_user)
+
+        post "/api/v1/articles", params: {
+          article: {
+            title: "テスト記事",
+            body: "テスト記事の本文"
+          }
+        }
+
+        expect(response).to have_http_status(:created)
+        expect(json_response["title"]).to eq("テスト記事")
+        expect(json_response["body"]).to eq("テスト記事の本文")
+        expect(json_response["user"]["id"]).to eq(test_user.id)
+        expect(json_response["user"]["name"]).to eq(test_user.name)
+        expect(json_response["user"]["email"]).to eq(test_user.email)
+      end
+
+      it "作成された記事がデータベースに保存される" do
+        allow_any_instance_of(Api::V1::BaseApiController).to receive(:current_user).and_return(test_user)
+
+        expect {
+          post "/api/v1/articles", params: {
+            article: {
+              title: "保存テスト記事",
+              body: "保存テスト記事の本文"
+            }
+          }
+        }.to change(Article, :count).by(1)
+
+        # データベースに正しく保存されているか確認
+        article = Article.last
+        expect(article.title).to eq("保存テスト記事")
+        expect(article.body).to eq("保存テスト記事の本文")
+        expect(article.user_id).to eq(test_user.id)
+      end
+    end
+
+    context "バリデーションエラー" do
+      it "タイトルが空の場合、エラーが返される" do
+        allow_any_instance_of(Api::V1::BaseApiController).to receive(:current_user).and_return(test_user)
+
+        post "/api/v1/articles", params: {
+          article: {
+            title: "",
+            body: "本文は入力済み"
+          }
+        }
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response["errors"]).to include("タイトルは1文字以上で入力してください")
+      end
+
+      it "本文が空の場合、エラーが返される" do
+        allow_any_instance_of(Api::V1::BaseApiController).to receive(:current_user).and_return(test_user)
+
+        post "/api/v1/articles", params: {
+          article: {
+            title: "タイトルは入力済み",
+            body: ""
+          }
+        }
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response["errors"]).to include("本文は1文字以上で入力してください")
+      end
+    end
+
+    context "異なるユーザーでの記事作成" do
+      let(:another_user) { create(:user, name: "別のユーザー", email: "another@example.com") }
+
+      it "異なるユーザーで記事作成が可能" do
+        # 別のユーザーでcurrent_userを設定
+        allow_any_instance_of(Api::V1::BaseApiController).to receive(:current_user).and_return(another_user)
+
+        post "/api/v1/articles", params: {
+          article: {
+            title: "別ユーザーの記事",
+            body: "別ユーザーの記事の本文"
+          }
+        }
+
+        expect(response).to have_http_status(:created)
+        expect(json_response["user"]["id"]).to eq(another_user.id)
+        expect(json_response["user"]["name"]).to eq("別のユーザー")
+      end
+    end
+  end
+
+  # TODO: 後で実装予定のアクション
   # describe "PATCH /update" do
   #   it "returns http success" do
   #     patch "/api/v1/articles/1"
