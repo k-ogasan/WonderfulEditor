@@ -45,6 +45,9 @@ class Api::V1::ArticlesController < Api::V1::BaseApiController
   end
 
   def destroy
+    article = current_user.articles.find(params[:id])
+    article.destroy!
+    head :no_content
   end
 
   private
