@@ -245,11 +245,42 @@ RSpec.describe "Api::V1::Articles", type: :request do
     end
   end
 
-  # TODO: 後で実装予定のアクション
-  # describe "DELETE /destroy" do
-  #   it "returns http success" do
-  #     delete "/api/v1/articles/1"
-  #     expect(response).to have_http_status(:success)
-  #   end
-  # end
+  describe "DELETE /api/v1/articles/:id" do
+    let(:test_user) { create(:user, name: "テストユーザー", email: "test@example.com") }
+    let(:article) { create(:article, user: test_user, title: "削除対象の記事", body: "削除対象の記事の本文") }
+
+    context "正常な記事削除" do
+      it "記事の削除が成功する" do
+        allow_any_instance_of(Api::V1::BaseApiController).to receive(:current_user).and_return(test_user)
+
+        expect {
+          delete "/api/v1/articles/#{article.id}"
+        }.to change { Article.count }.by(-1)
+
+        expect(response).to have_http_status(:no_content)
+      end
+    end
+
+    context "権限エラー" do
+      let(:other_user) { create(:user, name: "他のユーザー", email: "other@example.com") }
+
+      it "記事の所有者でない場合、権限エラーが返される" do
+        allow_any_instance_of(Api::V1::BaseApiController).to receive(:current_user).and_return(other_user)
+
+        delete "/api/v1/articles/#{article.id}"
+
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+
+    context "記事が見つからない場合" do
+      it "404エラーが返される" do
+        allow_any_instance_of(Api::V1::BaseApiController).to receive(:current_user).and_return(test_user)
+
+        delete "/api/v1/articles/99999"
+
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+  end
 end
