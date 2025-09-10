@@ -149,7 +149,7 @@ RSpec.describe "Api::V1::Articles", type: :request do
         }
 
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(json_response["errors"]).to include("タイトルは1文字以上で入力してください")
+        expect(json_response["errors"]).to include("Title is too short (minimum is 1 character)")
       end
 
       it "本文が空の場合、エラーが返される" do
@@ -163,7 +163,7 @@ RSpec.describe "Api::V1::Articles", type: :request do
         }
 
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(json_response["errors"]).to include("本文は1文字以上で入力してください")
+        expect(json_response["errors"]).to include("Body is too short (minimum is 1 character)")
       end
     end
 
@@ -247,7 +247,7 @@ RSpec.describe "Api::V1::Articles", type: :request do
 
   describe "DELETE /api/v1/articles/:id" do
     let(:test_user) { create(:user, name: "テストユーザー", email: "test@example.com") }
-    let(:article) { create(:article, user: test_user, title: "削除対象の記事", body: "削除対象の記事の本文") }
+    let!(:article) { create(:article, user: test_user, title: "削除対象の記事", body: "削除対象の記事の本文") }
 
     context "正常な記事削除" do
       it "記事の削除が成功する" do
