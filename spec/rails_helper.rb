@@ -64,4 +64,9 @@ RSpec.configure do |config|
   def json_response
     JSON.parse(response.body)
   end
+
+  # テスト用の認証スキップ設定
+  config.before(:each, type: :request) do
+    allow_any_instance_of(Api::V1::BaseApiController).to receive(:authenticate_api_v1_user!).and_return(true)
+  end
 end
