@@ -12,6 +12,13 @@ inherit_from:
 AllCops:
   TargetRubyVersion: 3.1
 
+# RuboCopの緩和設定
+RSpec/AnyInstance:
+  Enabled: false
+
+RSpec/ExpectChange:
+  Enabled: false
+
 Capybara/RSpec/PredicateMatcher:
   Exclude:
     - 'spec/models/**/*'
