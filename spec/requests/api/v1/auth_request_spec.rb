@@ -189,25 +189,27 @@ RSpec.describe "API::V1::Auth", type: :request do
 
     context "有効な認証トークンでログアウト" do
       it "ログアウトが成功する" do
-        # まずログインしてトークンを取得
-        post "/api/v1/auth/sign_in", params: {
-          email: "test@example.com",
-          password: "password123",
-        }
-
-        access_token = response.headers["access-token"]
-        client = response.headers["client"]
-        uid = response.headers["uid"]
+        # create_new_auth_tokenでトークンを生成
+        auth_headers = user.create_new_auth_token
 
         # ログアウト
-        delete "/api/v1/auth/sign_out", headers: {
-          "access-token" => access_token,
-          "client" => client,
-          "uid" => uid,
-        }
+        delete "/api/v1/auth/sign_out", headers: auth_headers
 
         expect(response).to have_http_status(:ok)
         expect(json_response["success"]).to eq(true)
+      end
+
+      it "ログアウト後にトークンが無効になる" do
+        # create_new_auth_tokenでトークンを生成
+        auth_headers = user.create_new_auth_token
+
+        # ログアウト
+        delete "/api/v1/auth/sign_out", headers: auth_headers
+        expect(response).to have_http_status(:ok)
+
+        # ログアウト後のトークンでAPIアクセス
+        get "/api/v1/auth/validate_token", headers: auth_headers
+        expect(response).to have_http_status(:unauthorized)
       end
     end
 
@@ -218,6 +220,14 @@ RSpec.describe "API::V1::Auth", type: :request do
           "client" => "invalid_client",
           "uid" => "test@example.com",
         }
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context "認証ヘッダーなしでログアウト" do
+      it "ログアウトが失敗する" do
+        delete "/api/v1/auth/sign_out"
 
         expect(response).to have_http_status(:unauthorized)
       end
