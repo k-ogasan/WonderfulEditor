@@ -1,6 +1,6 @@
 class Api::V1::ArticlesController < Api::V1::BaseApiController
   # 記事一覧と記事詳細は認証不要、その他は認証が必要
-  before_action :authenticate_api_v1_user!, except: [:index, :show]
+  before_action :authenticate_user!, except: [:index, :show]
 
   def index
     articles = Article.order(updated_at: :desc)
@@ -45,9 +45,18 @@ class Api::V1::ArticlesController < Api::V1::BaseApiController
   end
 
   def destroy
-    article = current_user.articles.find(params[:id])
+    article = Article.find(params[:id])
+
+    # 記事の所有者かどうかを確認
+    if article.user != current_user
+      render json: { error: "権限がありません" }, status: :forbidden
+      return
+    end
+
     article.destroy!
     head :no_content
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "記事が見つかりません" }, status: :not_found
   end
 
   private

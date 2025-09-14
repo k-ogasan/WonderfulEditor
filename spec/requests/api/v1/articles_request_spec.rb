@@ -99,15 +99,17 @@ RSpec.describe "Api::V1::Articles", type: :request do
 
     context "正常な記事作成" do
       it "記事作成時に正しいユーザーのIDが設定される" do
-        # allow_any_instance_ofを使用してcurrent_userをテスト用ユーザーに設定
-        allow_any_instance_of(Api::V1::BaseApiController).to receive(:current_user).and_return(test_user)
+        # create_new_auth_tokenで認証トークンを生成
+        auth_headers = test_user.create_new_auth_token
 
-        post "/api/v1/articles", params: {
-          article: {
-            title: "テスト記事",
-            body: "テスト記事の本文",
-          },
-        }
+        post "/api/v1/articles",
+             params: {
+               article: {
+                 title: "テスト記事",
+                 body: "テスト記事の本文",
+               },
+             },
+             headers: auth_headers
 
         expect(response).to have_http_status(:created)
         expect(json_response["title"]).to eq("テスト記事")
@@ -118,15 +120,17 @@ RSpec.describe "Api::V1::Articles", type: :request do
       end
 
       it "作成された記事がデータベースに保存される" do
-        allow_any_instance_of(Api::V1::BaseApiController).to receive(:current_user).and_return(test_user)
+        auth_headers = test_user.create_new_auth_token
 
         expect {
-          post "/api/v1/articles", params: {
-            article: {
-              title: "保存テスト記事",
-              body: "保存テスト記事の本文",
-            },
-          }
+          post "/api/v1/articles",
+               params: {
+                 article: {
+                   title: "保存テスト記事",
+                   body: "保存テスト記事の本文",
+                 },
+               },
+               headers: auth_headers
         }.to change { Article.count }.by(1)
 
         # データベースに正しく保存されているか確認
@@ -139,28 +143,32 @@ RSpec.describe "Api::V1::Articles", type: :request do
 
     context "バリデーションエラー" do
       it "タイトルが空の場合、エラーが返される" do
-        allow_any_instance_of(Api::V1::BaseApiController).to receive(:current_user).and_return(test_user)
+        auth_headers = test_user.create_new_auth_token
 
-        post "/api/v1/articles", params: {
-          article: {
-            title: "",
-            body: "本文は入力済み",
-          },
-        }
+        post "/api/v1/articles",
+             params: {
+               article: {
+                 title: "",
+                 body: "本文は入力済み",
+               },
+             },
+             headers: auth_headers
 
         expect(response).to have_http_status(:unprocessable_entity)
         expect(json_response["errors"]).to include("Title is too short (minimum is 1 character)")
       end
 
       it "本文が空の場合、エラーが返される" do
-        allow_any_instance_of(Api::V1::BaseApiController).to receive(:current_user).and_return(test_user)
+        auth_headers = test_user.create_new_auth_token
 
-        post "/api/v1/articles", params: {
-          article: {
-            title: "タイトルは入力済み",
-            body: "",
-          },
-        }
+        post "/api/v1/articles",
+             params: {
+               article: {
+                 title: "タイトルは入力済み",
+                 body: "",
+               },
+             },
+             headers: auth_headers
 
         expect(response).to have_http_status(:unprocessable_entity)
         expect(json_response["errors"]).to include("Body is too short (minimum is 1 character)")
@@ -172,14 +180,16 @@ RSpec.describe "Api::V1::Articles", type: :request do
 
       it "異なるユーザーで記事作成が可能" do
         # 別のユーザーでcurrent_userを設定
-        allow_any_instance_of(Api::V1::BaseApiController).to receive(:current_user).and_return(another_user)
+        auth_headers = another_user.create_new_auth_token
 
-        post "/api/v1/articles", params: {
-          article: {
-            title: "別ユーザーの記事",
-            body: "別ユーザーの記事の本文",
-          },
-        }
+        post "/api/v1/articles",
+             params: {
+               article: {
+                 title: "別ユーザーの記事",
+                 body: "別ユーザーの記事の本文",
+               },
+             },
+             headers: auth_headers
 
         expect(response).to have_http_status(:created)
         expect(json_response["user"]["id"]).to eq(another_user.id)
@@ -194,14 +204,16 @@ RSpec.describe "Api::V1::Articles", type: :request do
 
     context "正常な記事更新" do
       it "記事の更新が成功する" do
-        allow_any_instance_of(Api::V1::BaseApiController).to receive(:current_user).and_return(test_user)
+        auth_headers = test_user.create_new_auth_token
 
-        patch "/api/v1/articles/#{article.id}", params: {
-          article: {
-            title: "更新されたタイトル",
-            body: "更新された本文",
-          },
-        }
+        patch "/api/v1/articles/#{article.id}",
+              params: {
+                article: {
+                  title: "更新されたタイトル",
+                  body: "更新された本文",
+                },
+              },
+              headers: auth_headers
 
         expect(response).to have_http_status(:ok)
         expect(json_response["title"]).to eq("更新されたタイトル")
@@ -214,14 +226,16 @@ RSpec.describe "Api::V1::Articles", type: :request do
       let(:other_user) { create(:user, name: "他のユーザー", email: "other@example.com") }
 
       it "記事の所有者でない場合、権限エラーが返される" do
-        allow_any_instance_of(Api::V1::BaseApiController).to receive(:current_user).and_return(other_user)
+        auth_headers = other_user.create_new_auth_token
 
-        patch "/api/v1/articles/#{article.id}", params: {
-          article: {
-            title: "更新しようとしたタイトル",
-            body: "更新しようとした本文",
-          },
-        }
+        patch "/api/v1/articles/#{article.id}",
+              params: {
+                article: {
+                  title: "更新しようとしたタイトル",
+                  body: "更新しようとした本文",
+                },
+              },
+              headers: auth_headers
 
         expect(response).to have_http_status(:forbidden)
         expect(json_response["error"]).to eq("権限がありません")
@@ -230,14 +244,16 @@ RSpec.describe "Api::V1::Articles", type: :request do
 
     context "記事が見つからない場合" do
       it "404エラーが返される" do
-        allow_any_instance_of(Api::V1::BaseApiController).to receive(:current_user).and_return(test_user)
+        auth_headers = test_user.create_new_auth_token
 
-        patch "/api/v1/articles/99999", params: {
-          article: {
-            title: "更新しようとしたタイトル",
-            body: "更新しようとした本文",
-          },
-        }
+        patch "/api/v1/articles/99999",
+              params: {
+                article: {
+                  title: "更新しようとしたタイトル",
+                  body: "更新しようとした本文",
+                },
+              },
+              headers: auth_headers
 
         expect(response).to have_http_status(:not_found)
         expect(json_response["error"]).to eq("記事が見つかりません")
@@ -251,10 +267,10 @@ RSpec.describe "Api::V1::Articles", type: :request do
 
     context "正常な記事削除" do
       it "記事の削除が成功する" do
-        allow_any_instance_of(Api::V1::BaseApiController).to receive(:current_user).and_return(test_user)
+        auth_headers = test_user.create_new_auth_token
 
         expect {
-          delete "/api/v1/articles/#{article.id}"
+          delete "/api/v1/articles/#{article.id}", headers: auth_headers
         }.to change { Article.count }.by(-1)
 
         expect(response).to have_http_status(:no_content)
@@ -265,19 +281,20 @@ RSpec.describe "Api::V1::Articles", type: :request do
       let(:other_user) { create(:user, name: "他のユーザー", email: "other@example.com") }
 
       it "記事の所有者でない場合、権限エラーが返される" do
-        allow_any_instance_of(Api::V1::BaseApiController).to receive(:current_user).and_return(other_user)
+        auth_headers = other_user.create_new_auth_token
 
-        delete "/api/v1/articles/#{article.id}"
+        delete "/api/v1/articles/#{article.id}", headers: auth_headers
 
-        expect(response).to have_http_status(:not_found)
+        expect(response).to have_http_status(:forbidden)
+        expect(json_response["error"]).to eq("権限がありません")
       end
     end
 
     context "記事が見つからない場合" do
       it "404エラーが返される" do
-        allow_any_instance_of(Api::V1::BaseApiController).to receive(:current_user).and_return(test_user)
+        auth_headers = test_user.create_new_auth_token
 
-        delete "/api/v1/articles/99999"
+        delete "/api/v1/articles/99999", headers: auth_headers
 
         expect(response).to have_http_status(:not_found)
       end
