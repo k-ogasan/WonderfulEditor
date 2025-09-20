@@ -3,8 +3,8 @@ require "rails_helper"
 RSpec.describe "Api::V1::Articles", type: :request do
   describe "GET /index" do
     it "記事一覧を取得できる" do
-      # テストデータを作成
-      article = create(:article)
+      # テストデータを作成（公開記事として）
+      article = create(:article, status: :published)
 
       # APIリクエストを送信
       get "/api/v1/articles"
@@ -15,11 +15,25 @@ RSpec.describe "Api::V1::Articles", type: :request do
       expect(json_response.first["title"]).to eq(article.title)
       expect(json_response.first["updated_at"]).to be_present
     end
+
+    it "公開記事のみが表示される" do
+      # 公開記事と下書き記事を作成
+      published_article = create(:article, status: :published)
+      create(:article, status: :draft)
+
+      get "/api/v1/articles"
+
+      expect(response).to have_http_status(:ok)
+      expect(json_response).to be_an(Array)
+      expect(json_response.length).to eq(1)
+      expect(json_response.first["id"]).to eq(published_article.id)
+      expect(json_response.first["status"]).to eq("published")
+    end
   end
 
   describe "GET /api/v1/articles/:id" do
     let(:user) { create(:user) }
-    let(:article) { create(:article, user: user) }
+    let(:article) { create(:article, user: user, status: :published) }
 
     context "記事が存在する場合" do
       it "認証なしで記事詳細を取得できる" do
@@ -73,6 +87,37 @@ RSpec.describe "Api::V1::Articles", type: :request do
         expect(json_response).not_to have_key("comments_count")
         expect(json_response).not_to have_key("likes_count")
         expect(json_response).not_to have_key("display_date")
+      end
+    end
+
+    context "下書き記事の場合" do
+      let(:draft_article) { create(:article, user: user, status: :draft) }
+
+      it "所有者は下書き記事を取得できる" do
+        auth_headers = user.create_new_auth_token
+
+        get "/api/v1/articles/#{draft_article.id}", headers: auth_headers
+
+        expect(response).to have_http_status(:ok)
+        expect(json_response["id"]).to eq(draft_article.id)
+        expect(json_response["status"]).to eq("draft")
+      end
+
+      it "所有者以外は下書き記事にアクセスできない" do
+        other_user = create(:user)
+        auth_headers = other_user.create_new_auth_token
+
+        get "/api/v1/articles/#{draft_article.id}", headers: auth_headers
+
+        expect(response).to have_http_status(:forbidden)
+        expect(json_response["error"]).to eq("権限がありません")
+      end
+
+      it "認証なしでは下書き記事にアクセスできない" do
+        get "/api/v1/articles/#{draft_article.id}"
+
+        expect(response).to have_http_status(:forbidden)
+        expect(json_response["error"]).to eq("権限がありません")
       end
     end
 
@@ -138,6 +183,43 @@ RSpec.describe "Api::V1::Articles", type: :request do
         expect(article.title).to eq("保存テスト記事")
         expect(article.body).to eq("保存テスト記事の本文")
         expect(article.user_id).to eq(test_user.id)
+        expect(article.draft?).to be true
+      end
+
+      it "下書き記事として保存できる" do
+        auth_headers = test_user.create_new_auth_token
+
+        post "/api/v1/articles",
+             params: {
+               article: {
+                 title: "下書き記事",
+                 body: "下書き記事の本文",
+                 status: "draft",
+               },
+             },
+             headers: auth_headers
+
+        expect(response).to have_http_status(:created)
+        expect(json_response["status"]).to eq("draft")
+        expect(json_response["published_at"]).to be_nil
+      end
+
+      it "公開記事として保存できる" do
+        auth_headers = test_user.create_new_auth_token
+
+        post "/api/v1/articles",
+             params: {
+               article: {
+                 title: "公開記事",
+                 body: "公開記事の本文",
+                 status: "published",
+               },
+             },
+             headers: auth_headers
+
+        expect(response).to have_http_status(:created)
+        expect(json_response["status"]).to eq("published")
+        expect(json_response["published_at"]).to be_present
       end
     end
 
@@ -155,7 +237,7 @@ RSpec.describe "Api::V1::Articles", type: :request do
              headers: auth_headers
 
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(json_response["errors"]).to include("Title is too short (minimum is 1 character)")
+        expect(json_response["errors"]).to include("Title can't be blank")
       end
 
       it "本文が空の場合、エラーが返される" do
@@ -171,7 +253,7 @@ RSpec.describe "Api::V1::Articles", type: :request do
              headers: auth_headers
 
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(json_response["errors"]).to include("Body is too short (minimum is 1 character)")
+        expect(json_response["errors"]).to include("Body can't be blank")
       end
     end
 
@@ -200,7 +282,7 @@ RSpec.describe "Api::V1::Articles", type: :request do
 
   describe "PATCH /api/v1/articles/:id" do
     let(:test_user) { create(:user, name: "テストユーザー", email: "test@example.com") }
-    let(:article) { create(:article, user: test_user, title: "元のタイトル", body: "元の本文") }
+    let(:article) { create(:article, user: test_user, title: "元のタイトル", body: "元の本文", status: :published) }
 
     context "正常な記事更新" do
       it "記事の更新が成功する" do
@@ -219,6 +301,39 @@ RSpec.describe "Api::V1::Articles", type: :request do
         expect(json_response["title"]).to eq("更新されたタイトル")
         expect(json_response["body"]).to eq("更新された本文")
         expect(json_response["user"]["id"]).to eq(test_user.id)
+      end
+
+      it "下書きから公開に変更できる" do
+        auth_headers = test_user.create_new_auth_token
+        draft_article = create(:article, user: test_user, status: :draft)
+
+        patch "/api/v1/articles/#{draft_article.id}",
+              params: {
+                article: {
+                  status: "published",
+                },
+              },
+              headers: auth_headers
+
+        expect(response).to have_http_status(:ok)
+        expect(json_response["status"]).to eq("published")
+        expect(json_response["published_at"]).to be_present
+      end
+
+      it "公開から下書きに変更できる" do
+        auth_headers = test_user.create_new_auth_token
+        published_article = create(:article, user: test_user, status: :published)
+
+        patch "/api/v1/articles/#{published_article.id}",
+              params: {
+                article: {
+                  status: "draft",
+                },
+              },
+              headers: auth_headers
+
+        expect(response).to have_http_status(:ok)
+        expect(json_response["status"]).to eq("draft")
       end
     end
 
@@ -263,7 +378,7 @@ RSpec.describe "Api::V1::Articles", type: :request do
 
   describe "DELETE /api/v1/articles/:id" do
     let(:test_user) { create(:user, name: "テストユーザー", email: "test@example.com") }
-    let!(:article) { create(:article, user: test_user, title: "削除対象の記事", body: "削除対象の記事の本文") }
+    let!(:article) { create(:article, user: test_user, title: "削除対象の記事", body: "削除対象の記事の本文", status: :published) }
 
     context "正常な記事削除" do
       it "記事の削除が成功する" do
@@ -297,6 +412,48 @@ RSpec.describe "Api::V1::Articles", type: :request do
         delete "/api/v1/articles/99999", headers: auth_headers
 
         expect(response).to have_http_status(:not_found)
+      end
+    end
+  end
+
+  describe "GET /api/v1/articles/drafts" do
+    let(:test_user) { create(:user, name: "テストユーザー", email: "test@example.com") }
+
+    context "認証済みユーザーの場合" do
+      it "自分の下書き記事一覧を取得できる" do
+        auth_headers = test_user.create_new_auth_token
+        create(:article, user: test_user, status: :draft, title: "下書き記事1")
+        create(:article, user: test_user, status: :draft, title: "下書き記事2")
+        create(:article, user: test_user, status: :published, title: "公開記事")
+
+        get "/api/v1/articles/drafts", headers: auth_headers
+
+        expect(response).to have_http_status(:ok)
+        expect(json_response).to be_an(Array)
+        expect(json_response.length).to eq(2)
+        expect(json_response.map {|article| article["title"] }).to contain_exactly("下書き記事1", "下書き記事2")
+        expect(json_response.all? {|article| article["status"] == "draft" }).to be true
+      end
+
+      it "他のユーザーの下書き記事は表示されない" do
+        auth_headers = test_user.create_new_auth_token
+        other_user = create(:user)
+        create(:article, user: other_user, status: :draft, title: "他人の下書き")
+        create(:article, user: test_user, status: :draft, title: "自分の下書き")
+
+        get "/api/v1/articles/drafts", headers: auth_headers
+
+        expect(response).to have_http_status(:ok)
+        expect(json_response.length).to eq(1)
+        expect(json_response.first["title"]).to eq("自分の下書き")
+      end
+    end
+
+    context "認証なしの場合" do
+      it "401エラーが返される" do
+        get "/api/v1/articles/drafts"
+
+        expect(response).to have_http_status(:unauthorized)
       end
     end
   end

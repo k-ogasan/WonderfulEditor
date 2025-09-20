@@ -3,12 +3,19 @@ class Api::V1::ArticlesController < Api::V1::BaseApiController
   before_action :authenticate_user!, except: [:index, :show]
 
   def index
-    articles = Article.order(updated_at: :desc)
+    articles = Article.published.order(updated_at: :desc)
     render json: articles, each_serializer: Api::V1::ArticlePreviewSerializer
   end
 
   def show
     article = Article.find(params[:id])
+
+    # 下書き記事は所有者のみアクセス可能
+    if article.draft? && article.user != current_user
+      render json: { error: "権限がありません" }, status: :forbidden
+      return
+    end
+
     render json: article, serializer: Api::V1::ArticleDetailSerializer
   rescue ActiveRecord::RecordNotFound
     render json: { error: "記事が見つかりません" }, status: :not_found
@@ -17,6 +24,9 @@ class Api::V1::ArticlesController < Api::V1::BaseApiController
   def create
     # current_userを使用して記事を作成
     article = current_user.articles.build(article_params)
+
+    # statusが指定されていない場合は下書きとして作成
+    article.status ||= :draft
 
     if article.save
       render json: article, serializer: Api::V1::ArticleDetailSerializer, status: :created
@@ -59,10 +69,15 @@ class Api::V1::ArticlesController < Api::V1::BaseApiController
     render json: { error: "記事が見つかりません" }, status: :not_found
   end
 
+  def drafts
+    articles = current_user.articles.draft.order(updated_at: :desc)
+    render json: articles, each_serializer: Api::V1::ArticlePreviewSerializer
+  end
+
   private
 
     def article_params
       # 許可するパラメータを制限
-      params.require(:article).permit(:title, :body)
+      params.require(:article).permit(:title, :body, :status)
     end
 end
