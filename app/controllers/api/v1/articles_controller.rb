@@ -8,14 +8,7 @@ class Api::V1::ArticlesController < Api::V1::BaseApiController
   end
 
   def show
-    article = Article.find(params[:id])
-
-    # 下書き記事は所有者のみアクセス可能
-    if article.draft? && article.user != current_user
-      render json: { error: "権限がありません" }, status: :forbidden
-      return
-    end
-
+    article = Article.published.find(params[:id])
     render json: article, serializer: Api::V1::ArticleDetailSerializer
   rescue ActiveRecord::RecordNotFound
     render json: { error: "記事が見つかりません" }, status: :not_found
