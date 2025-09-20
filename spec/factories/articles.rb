@@ -2,16 +2,20 @@
 #
 # Table name: articles
 #
-#  id         :bigint           not null, primary key
-#  body       :text
-#  title      :string
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
-#  user_id    :bigint           not null
+#  id           :bigint           not null, primary key
+#  body         :text
+#  published_at :datetime
+#  status       :integer          default("draft"), not null
+#  title        :string
+#  created_at   :datetime         not null
+#  updated_at   :datetime         not null
+#  user_id      :bigint           not null
 #
 # Indexes
 #
-#  index_articles_on_user_id  (user_id)
+#  index_articles_on_published_at  (published_at)
+#  index_articles_on_status        (status)
+#  index_articles_on_user_id       (user_id)
 #
 # Foreign Keys
 #
