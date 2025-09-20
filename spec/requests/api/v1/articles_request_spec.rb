@@ -93,31 +93,20 @@ RSpec.describe "Api::V1::Articles", type: :request do
     context "下書き記事の場合" do
       let(:draft_article) { create(:article, user: user, status: :draft) }
 
-      it "所有者は下書き記事を取得できる" do
+      it "下書き記事は404エラーを返す" do
+        get "/api/v1/articles/#{draft_article.id}"
+
+        expect(response).to have_http_status(:not_found)
+        expect(json_response["error"]).to eq("記事が見つかりません")
+      end
+
+      it "認証済みでも下書き記事は404エラーを返す" do
         auth_headers = user.create_new_auth_token
 
         get "/api/v1/articles/#{draft_article.id}", headers: auth_headers
 
-        expect(response).to have_http_status(:ok)
-        expect(json_response["id"]).to eq(draft_article.id)
-        expect(json_response["status"]).to eq("draft")
-      end
-
-      it "所有者以外は下書き記事にアクセスできない" do
-        other_user = create(:user)
-        auth_headers = other_user.create_new_auth_token
-
-        get "/api/v1/articles/#{draft_article.id}", headers: auth_headers
-
-        expect(response).to have_http_status(:forbidden)
-        expect(json_response["error"]).to eq("権限がありません")
-      end
-
-      it "認証なしでは下書き記事にアクセスできない" do
-        get "/api/v1/articles/#{draft_article.id}"
-
-        expect(response).to have_http_status(:forbidden)
-        expect(json_response["error"]).to eq("権限がありません")
+        expect(response).to have_http_status(:not_found)
+        expect(json_response["error"]).to eq("記事が見つかりません")
       end
     end
 
