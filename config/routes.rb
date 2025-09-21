@@ -14,6 +14,9 @@ Rails.application.routes.draw do
         collection do
           get :drafts
         end
+        member do
+          get :draft
+        end
       end
     end
   end
