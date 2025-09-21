@@ -10,6 +10,7 @@ Rails.application.routes.draw do
       mount_devise_token_auth_for "User", at: "auth", controllers: {
         sessions: "api/v1/auth",
       }
+      get "current/articles", to: "articles#current_articles"
       resources :articles do
         collection do
           get :drafts
