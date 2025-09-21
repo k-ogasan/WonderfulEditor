@@ -62,25 +62,6 @@ class Api::V1::ArticlesController < Api::V1::BaseApiController
     render json: { error: "記事が見つかりません" }, status: :not_found
   end
 
-  def drafts
-    articles = current_user.articles.draft.order(updated_at: :desc)
-    render json: articles, each_serializer: Api::V1::ArticlePreviewSerializer
-  rescue ActiveRecord::RecordNotFound
-    render json: { error: "下書き記事が見つかりません" }, status: :not_found
-  end
-
-  def current_articles
-    articles = current_user.articles.published.order(updated_at: :desc)
-    render json: articles, each_serializer: Api::V1::ArticlePreviewSerializer
-  end
-
-  def draft
-    article = current_user.articles.draft.find(params[:id])
-    render json: article, serializer: Api::V1::ArticleDetailSerializer
-  rescue ActiveRecord::RecordNotFound
-    render json: { error: "下書き記事が見つかりません" }, status: :not_found
-  end
-
   private
 
     def article_params

@@ -1,8 +1,13 @@
 {
   "name": "wonderful_editor",
+  "engines": {
+    "node": "14.x",
+    "yarn": "1.x"
+  },
   "private": true,
   "dependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@fortawesome/fontawesome-free": "^5.14.0",
     "@rails/actioncable": "^6.0.0",
     "@rails/activestorage": "^6.0.0",
     "@rails/ujs": "^6.0.0",
