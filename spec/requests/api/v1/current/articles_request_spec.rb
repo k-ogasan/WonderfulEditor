@@ -62,4 +62,3 @@ RSpec.describe "Api::V1::Current::Articles", type: :request do
     end
   end
 end
-

@@ -15,4 +15,3 @@ class Api::V1::Articles::DraftsController < Api::V1::BaseApiController
     render json: { error: "下書き記事が見つかりません" }, status: :not_found
   end
 end
-

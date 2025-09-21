@@ -108,4 +108,3 @@ RSpec.describe "Api::V1::Articles::Drafts", type: :request do
     end
   end
 end
-

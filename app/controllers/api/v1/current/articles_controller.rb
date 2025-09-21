@@ -6,4 +6,3 @@ class Api::V1::Current::ArticlesController < Api::V1::BaseApiController
     render json: articles, each_serializer: Api::V1::ArticlePreviewSerializer
   end
 end
-
