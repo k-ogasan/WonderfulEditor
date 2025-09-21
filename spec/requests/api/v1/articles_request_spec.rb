@@ -445,5 +445,73 @@ RSpec.describe "Api::V1::Articles", type: :request do
         expect(response).to have_http_status(:unauthorized)
       end
     end
+    describe "GET /api/v1/articles/:id/draft" do
+      let(:test_user) { create(:user, name: "テストユーザー", email: "test@example.com") }
+
+      context "認証済みユーザーの場合" do
+        it "自分の下書き記事詳細を取得できる" do
+          auth_headers = test_user.create_new_auth_token
+          draft_article = create(:article, user: test_user, status: :draft, title: "下書き記事詳細", body: "下書き記事の本文")
+
+          get "/api/v1/articles/#{draft_article.id}/draft", headers: auth_headers
+
+          expect(response).to have_http_status(:ok)
+          expect(json_response["id"]).to eq(draft_article.id)
+          expect(json_response["title"]).to eq("下書き記事詳細")
+          expect(json_response["body"]).to eq("下書き記事の本文")
+          expect(json_response["status"]).to eq("draft")
+          expect(json_response["published_at"]).to be_nil
+          expect(json_response["user"]["id"]).to eq(test_user.id)
+        end
+
+        it "他のユーザーの下書き記事は取得できない" do
+          auth_headers = test_user.create_new_auth_token
+          other_user = create(:user)
+          other_draft = create(:article, user: other_user, status: :draft, title: "他人の下書き")
+
+          get "/api/v1/articles/#{other_draft.id}/draft", headers: auth_headers
+
+          expect(response).to have_http_status(:not_found)
+          expect(json_response["error"]).to eq("下書き記事が見つかりません")
+        end
+
+        it "存在しない下書き記事IDの場合は404エラー" do
+          auth_headers = test_user.create_new_auth_token
+
+          get "/api/v1/articles/99999/draft", headers: auth_headers
+
+          expect(response).to have_http_status(:not_found)
+          expect(json_response["error"]).to eq("下書き記事が見つかりません")
+        end
+
+        it "公開記事のIDを指定しても404エラー" do
+          auth_headers = test_user.create_new_auth_token
+          published_article = create(:article, user: test_user, status: :published, title: "公開記事")
+
+          get "/api/v1/articles/#{published_article.id}/draft", headers: auth_headers
+
+          expect(response).to have_http_status(:not_found)
+          expect(json_response["error"]).to eq("下書き記事が見つかりません")
+        end
+
+        it "不正なID形式の場合は404エラー" do
+          auth_headers = test_user.create_new_auth_token
+
+          get "/api/v1/articles/invalid_id/draft", headers: auth_headers
+
+          expect(response).to have_http_status(:not_found)
+        end
+      end
+
+      context "認証なしの場合" do
+        it "401エラーが返される" do
+          draft_article = create(:article, status: :draft)
+
+          get "/api/v1/articles/#{draft_article.id}/draft"
+
+          expect(response).to have_http_status(:unauthorized)
+        end
+      end
+    end
   end
 end
