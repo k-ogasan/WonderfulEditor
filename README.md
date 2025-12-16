@@ -1,24 +1,21 @@
-# README
+# URL 
+https://wonderful-editor-2xty.onrender.com/
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+# サービスの概要
+Qiitaをイメージしたマークダウン記法が使える記事投稿アプリです。
 
-Things you may want to cover:
+# サービスを開発した背景
+スクールで学習したRuby、Railsの実践課題として取り組みました。
 
-* Ruby version
+# 画面や機能の説明
+・ユーザー登録とログイン機能、投稿のCRUD機能といった基本機能を実装
+・gem「devise」を活用しログイン機能を実装
+・AI開発ツール「Cursor」を導入
 
-* System dependencies
+# 主な使用技術
+## バックエンド
+・Ruby 3.1.3 ・Rails 6.1.7.10 ・HTML ・CSS ・Git ・RSpec ・Docker ・devise
 
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+## フロントエンド
+・JavaScript
+### フロントエンドは提供されたテンプレートを使用し、主にバックエンド側の実装を担当しています。
