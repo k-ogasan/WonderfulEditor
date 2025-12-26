@@ -4,7 +4,10 @@ RSpec.describe "Api::V1::Articles", type: :request do
   describe "GET /index" do
     it "記事一覧を取得できる" do
       # テストデータを作成（公開記事として）
-      article = create(:article, status: :published)
+      older = create(:article, status: :published)
+      older.update!(updated_at: 2.days.ago)
+      newer = create(:article, status: :published)
+      newer.update!(updated_at: Time.current)
 
       # APIリクエストを送信
       get "/api/v1/articles"
@@ -12,7 +15,7 @@ RSpec.describe "Api::V1::Articles", type: :request do
       # レスポンスを確認
       expect(response).to have_http_status(:ok)
       expect(json_response).to be_an(Array)
-      expect(json_response.first["title"]).to eq(article.title)
+      expect(json_response.first["id"]).to eq(newer.id)
       expect(json_response.first["updated_at"]).to be_present
     end
 
